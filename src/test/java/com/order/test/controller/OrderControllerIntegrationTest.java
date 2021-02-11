@@ -1,53 +1,55 @@
 package com.order.test.controller;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.client.RestTemplate;
 
-import com.order.config.AppConfig;
-import com.order.config.MongoConfig;
-import com.order.config.WebFluxConfig;
-import com.order.controller.OrderController;
-import com.order.entity.OrderDetail;
-import com.order.repo.OrderRepository;
-import com.order.service.impl.OrderServiceImpl;
+import com.order.OrderSpringApplication;
 import com.order.test.service.impl.OrderServiceImplIntegrationTest;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Class OrderControllerIntegrationTest.
+ */
 @RunWith(SpringRunner.class)
-@Import({ AppConfig.class, MongoConfig.class, OrderController.class, OrderServiceImpl.class, WebFluxConfig.class })
-@WebMvcTest
-@SpringBootTest
+
+@SpringBootTest(classes = OrderSpringApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 public class OrderControllerIntegrationTest {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(OrderServiceImplIntegrationTest.class);
+	/** The logger. */
+	private final Logger LOGGER = LoggerFactory.getLogger(OrderServiceImplIntegrationTest.class);
 
-	@Autowired
-	private MockMvc mockMvc;
+	/** The header content type. */
+	private final String HEADER_CONTENT_TYPE = "Content-Type";
 
-	@Autowired
-	private OrderController orderController;
+	/** The header content type value. */
+	private final String HEADER_CONTENT_TYPE_VALUE = "application/json";
 
-	@Autowired
-	private MongoConfig mongoConfig;
+	/** The api url. */
+	private final String createApiUrl = "/orders/add";
 
+	/** The find by id api url. */
+	private final String findByIdApiUrl = "/orders/findById?objectId=";
 
-	String exampleCourseJson = "[\n" + "   {\n" + "      \"orderId\":\"401a85e2-f5da-494b-9f3f-756a91982f00\",\n"
+	/** The base URL. */
+	private String baseURL;
+
+	/** The test json. */
+	private String testJson = "[\n" + "   {\n" + "      \"orderId\":\"401a85e2-f5da-494b-9f3f-756a91982f00\",\n"
 			+ "      \"timestamp\":1612487464353,\n" + "      \"status\":0,\n" + "      \"orderTotal\":10.23,\n"
 			+ "      \"shippingCost\":3.45,\n" + "      \"customerId\":\"401a85e2-f5da-494b-9f3f-756a91982f01\",\n"
 			+ "      \"itemId\":\"401a85e2-f5da-494b-9f3f-756a91982f02\",\n" + "      \"quantity\":1,\n"
@@ -58,43 +60,72 @@ public class OrderControllerIntegrationTest {
 			+ "      \"itemId\":\"401a85e2-f5da-494b-9f3f-756a91972f02\",\n" + "      \"quantity\":1,\n"
 			+ "      \"note\":\"test888\"\n" + "   }\n" + "]";
 
-	@Test
-	public void create() {
+	/** The random server port. */
+	@LocalServerPort
+	int randomServerPort;
+
+	/**
+	 * Inits the.
+	 */
+	@Before
+	public void init() {
 		try {
 			LOGGER.info("Running junit test for Order Controller.");
 
-			mongoConfig.reactiveMongoClient();
-			mongoConfig.reactiveMongoTemplate();
+			baseURL = InetAddress.getLocalHost().getHostAddress() + ":" + randomServerPort;
+			LOGGER.error("baseURL : {}", baseURL);
 
-			MockHttpServletRequest request = new MockHttpServletRequest();
-			RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
-
-			List<OrderDetail> orderDetailList = new ArrayList<>();
-
-			OrderDetail orderDetail = new OrderDetail();
-			orderDetail.setOrderId(UUID.randomUUID().toString());
-			orderDetail.setItemId(UUID.randomUUID().toString());
-			orderDetail.setCustomerId(UUID.randomUUID().toString());
-			orderDetail.setNote("This is testing note.");
-			orderDetail.setOrderTotal(1);
-			orderDetail.setQuantity(1);
-			orderDetail.setShippingCost(150.00);
-			orderDetail.setStatus(1);
-			orderDetail.setTimestamp(new Date());
-
-			orderDetailList.add(orderDetail);
-
-			orderController.create(orderDetailList);
-
-			
-			LOGGER.info("Run junit test successfully for Order Controller.");
-		} catch (
-
-		Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (UnknownHostException e) {
+			LOGGER.error("Failed to set baseURL due to : {}", e.getMessage(), e);
 		}
 	}
 
+	/**
+	 * Creates the.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void create() throws Exception {
+		LOGGER.info("Inserting data using Order Controller.");
+
+		RestTemplate restTemplate = new RestTemplate();
+
+		URI uri = new URI("http://" + baseURL + createApiUrl);
+		HttpHeaders headers = new HttpHeaders();
+		headers.set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_VALUE);
+		LOGGER.info("URI: {}", uri);
+
+		HttpEntity<String> request = new HttpEntity<>(testJson, headers);
+		ResponseEntity<Object> response = restTemplate.postForEntity(uri, request, Object.class);
+		LOGGER.info("Status: {}", response.getStatusCode());
+
+		LOGGER.info("Insert data successfull.");
+
+	}
+
+	/**
+	 * Find by id.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void findById() throws Exception {
+		LOGGER.info("Fetching data using Order Controller.");
+
+		String savedObjectId = "401a85e2-f5da-494b-9f3f-756a91982f00";
+
+		RestTemplate restTemplate = new RestTemplate();
+
+		URI uri = new URI("http://" + baseURL + findByIdApiUrl + savedObjectId);
+		LOGGER.info("URI: {}", uri);
+
+		ResponseEntity<Object> response = restTemplate.getForEntity(uri, Object.class);
+		LOGGER.info("Response Status: {}", response.getStatusCode());
+		LOGGER.info("Response Body: {}", response.getBody());
+
+		LOGGER.info("Fetched data successfull.");
+
+	}
 
 }

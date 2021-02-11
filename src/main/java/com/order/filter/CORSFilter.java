@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO: Auto-generated Javadoc
 /**
  * The Class CORSFilter.
  */
@@ -24,6 +25,15 @@ public class CORSFilter implements Filter {
 	/** The Constant LOG. */
 	private static final Logger LOG = LoggerFactory.getLogger(CORSFilter.class);
 
+	/**
+	 * Do filter.
+	 *
+	 * @param req the req
+	 * @param res the res
+	 * @param chain the chain
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 * @throws ServletException the servlet exception
+	 */
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -45,6 +55,11 @@ public class CORSFilter implements Filter {
 		chain.doFilter(req, res);
 	}
 
+	/**
+	 * Inits the.
+	 *
+	 * @param filterConfig the filter config
+	 */
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -55,6 +70,9 @@ public class CORSFilter implements Filter {
 
 	}
 
+	/**
+	 * Destroy.
+	 */
 	/*
 	 * (non-Javadoc)
 	 * 
